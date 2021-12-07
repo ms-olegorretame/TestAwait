@@ -16,10 +16,11 @@ namespace TestAwait.Controllers
         }
 
         [HttpGet(Name = "GetTheTime")]
-        public async Task<LatencyReport> Get(bool awaitTrue, bool awaitFalse, bool discard, bool startNew, bool workItem)
+        public async Task<LatencyReport> Get(bool awaitTrue, bool awaitFalse, bool discard, bool startNew, bool taskRun, bool workItem)
         {
             var callStarted = DateTime.UtcNow;
-            Task myTask = null;
+            Task? newTask = null;
+            Task? ranTask = null;
             Console.WriteLine($"----------------------------------------------");
             if (awaitTrue)
             {
@@ -45,9 +46,17 @@ namespace TestAwait.Controllers
             if (startNew)
             {
                 Console.WriteLine($"Before StartNew: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                myTask = Task.Factory.StartNew(() => longRunning("StartNew"));
-                Console.WriteLine($"myTask is: {myTask.Status}");
+                newTask = Task.Factory.StartNew(() => longRunning("StartNew"));
+                Console.WriteLine($"newTask is: {newTask.Status}");
                 Console.WriteLine($"After StartNew: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            }
+
+            if (taskRun)
+            {
+                Console.WriteLine($"Before Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                ranTask = Task.Run(() => longRunning("StartNew"));
+                Console.WriteLine($"ranTask is: {ranTask.Status}");
+                Console.WriteLine($"After Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
             }
 
             if (workItem)
@@ -57,9 +66,14 @@ namespace TestAwait.Controllers
                 Console.WriteLine($"After QueueUserWorkItem: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
             }
 
-            if (myTask is not null)
+            if (newTask is not null)
             {
-                Console.WriteLine($"myTask is: {myTask.Status}");
+                Console.WriteLine($"newTask is: {newTask.Status}");
+            }
+
+            if (ranTask is not null)
+            {
+                Console.WriteLine($"ranTask is: {ranTask.Status}");
             }
 
             Console.WriteLine($">>>>>>>> Time to return: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
@@ -74,6 +88,7 @@ namespace TestAwait.Controllers
             Console.WriteLine($"[{pattern}] Before Sleep: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
             Thread.Sleep(3000);
             Console.WriteLine($"[{pattern}] After Sleep: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            Console.WriteLine($"[{pattern}] Before await (inside): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
             await Task.Delay(1000);
             Console.WriteLine($"[{pattern}] After await (inside): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
         }
