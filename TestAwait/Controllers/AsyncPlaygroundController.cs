@@ -54,7 +54,7 @@ namespace TestAwait.Controllers
             if (taskRun)
             {
                 Console.WriteLine($"Before Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                ranTask = Task.Run(() => longRunning("StartNew"));
+                ranTask = Task.Run(() => longRunning("Task.Run"));
                 Console.WriteLine($"ranTask is: {ranTask.Status}");
                 Console.WriteLine($"After Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
             }
