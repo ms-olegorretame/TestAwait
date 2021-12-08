@@ -16,7 +16,7 @@ namespace TestAwait.Controllers
         }
 
         [HttpGet(Name = "GetTheTime")]
-        public async Task<LatencyReport> Get(bool awaitTrue, bool awaitFalse, bool discard, bool startNew, bool taskRun, bool workItem)
+        public async Task<LatencyReport> Get(bool awaitTrue, bool awaitFalse, bool discard, bool startNew, bool taskRun, bool workItem, bool fireAndForgetExtension)
         {
             var callStarted = DateTime.UtcNow;
             Task? newTask = null;
@@ -68,6 +68,13 @@ namespace TestAwait.Controllers
                 LogMessage($"After QueueUserWorkItem: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
+            if (fireAndForgetExtension)
+            {
+                LogMessage($"Before FnF: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                LongRunning("FnF").FireAndForget();
+                LogMessage($"After FnF: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+            }
+
             if (newTask is not null)
             {
                 LogMessage($"newTask is: {newTask.Status} Thread: {Environment.CurrentManagedThreadId}");
@@ -95,7 +102,7 @@ namespace TestAwait.Controllers
             Thread.Sleep(3000);
             LogMessage($"[{pattern}] After Sleep: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             LogMessage($"[{pattern}] Before await (inside): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
-            await Task.Delay(1000);
+            await Task.Delay(1000).ConfigureAwait(false);
             LogMessage($"[{pattern}] After await (inside): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
         }
       
