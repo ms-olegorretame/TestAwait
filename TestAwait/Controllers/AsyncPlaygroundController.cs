@@ -21,76 +21,82 @@ namespace TestAwait.Controllers
             var callStarted = DateTime.UtcNow;
             Task? newTask = null;
             Task? ranTask = null;
-            Console.WriteLine($"----------------------------------------------");
+            LogMessage($"------------------------- {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}------------------");
             if (awaitTrue)
             {
-                Console.WriteLine($"Before await (true): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                await longRunning("await (true)").ConfigureAwait(true);
-                Console.WriteLine($"After await (true): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before await (true): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                await LongRunning("await (true)").ConfigureAwait(true);
+                LogMessage($"After await (true): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (awaitFalse)
             {
-                Console.WriteLine($"Before await (false): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                await longRunning("await (false)").ConfigureAwait(false);
-                Console.WriteLine($"After await (false): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before await (false): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                await LongRunning("await (false)").ConfigureAwait(false);
+                LogMessage($"After await (false): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (discard)
             {
-                Console.WriteLine($"Before discard: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                _ = longRunning("discard");
-                Console.WriteLine($"After discard: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before discard: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                _ = LongRunning("discard");
+                LogMessage($"After discard: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (startNew)
             {
-                Console.WriteLine($"Before StartNew: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                newTask = Task.Factory.StartNew(() => longRunning("StartNew"));
-                Console.WriteLine($"newTask is: {newTask.Status}");
-                Console.WriteLine($"After StartNew: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before StartNew: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                newTask = Task.Factory.StartNew(() => LongRunning("StartNew"));
+                LogMessage($"newTask is: {newTask.Status} Thread: {Environment.CurrentManagedThreadId}");
+                LogMessage($"After StartNew: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (taskRun)
             {
-                Console.WriteLine($"Before Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                ranTask = Task.Run(() => longRunning("Task.Run"));
-                Console.WriteLine($"ranTask is: {ranTask.Status}");
-                Console.WriteLine($"After Task.Run: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before Task.Run: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+                ranTask = Task.Run(() => LongRunning("Task.Run"));
+                LogMessage($"ranTask is: {ranTask.Status} Thread: {Environment.CurrentManagedThreadId}");
+                LogMessage($"After Task.Run: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (workItem)
             {
-                Console.WriteLine($"Before QueueUserWorkItem: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-                ThreadPool.QueueUserWorkItem(new WaitCallback(state => longRunning("workitem")));
-                Console.WriteLine($"After QueueUserWorkItem: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+                LogMessage($"Before QueueUserWorkItem: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                ThreadPool.QueueUserWorkItem(new (_ => LongRunning("workitem")));
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                LogMessage($"After QueueUserWorkItem: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (newTask is not null)
             {
-                Console.WriteLine($"newTask is: {newTask.Status}");
+                LogMessage($"newTask is: {newTask.Status} Thread: {Environment.CurrentManagedThreadId}");
             }
 
             if (ranTask is not null)
             {
-                Console.WriteLine($"ranTask is: {ranTask.Status}");
+                LogMessage($"ranTask is: {ranTask.Status} Thread: {Environment.CurrentManagedThreadId}");
             }
 
-            Console.WriteLine($">>>>>>>> Time to return: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            LogMessage($">>>>>>>> Time to return: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             var callEnded = DateTime.UtcNow;
             return new(callStarted, callEnded, (callEnded-callStarted).Ticks);
 
         }
 
-      
-        private async Task longRunning(string pattern)
+        private void LogMessage(string message)
         {
-            Console.WriteLine($"[{pattern}] Before Sleep: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            _logger.LogInformation(message);
+        }
+
+        private async Task LongRunning(string pattern)
+        {
+            LogMessage($"[{pattern}] Before Sleep: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             Thread.Sleep(3000);
-            Console.WriteLine($"[{pattern}] After Sleep: {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
-            Console.WriteLine($"[{pattern}] Before await (inside): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            LogMessage($"[{pattern}] After Sleep: {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
+            LogMessage($"[{pattern}] Before await (inside): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
             await Task.Delay(1000);
-            Console.WriteLine($"[{pattern}] After await (inside): {DateTime.UtcNow} Thread: {Thread.CurrentThread.ManagedThreadId}");
+            LogMessage($"[{pattern}] After await (inside): {DateTime.UtcNow} Thread: {Environment.CurrentManagedThreadId}");
         }
       
     }
